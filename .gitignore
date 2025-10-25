@@ -2,3 +2,4 @@
 .vscode
 c/main
 node_modules
+results.json
