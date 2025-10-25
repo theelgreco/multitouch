@@ -26,15 +26,7 @@ typedef int (*MTContactCallbackFunction)(int,Finger*,int,double,int);
 
 MTDeviceRef MTDeviceCreateDefault();
 void MTRegisterContactFrameCallback(MTDeviceRef, MTContactCallbackFunction);
-void MTDeviceStart(MTDeviceRef, int); // thanks comex
-
-// Send one JSON message to Chrome
-void send_json(const char *json) {
-    uint32_t len = (uint32_t)strlen(json);
-    fwrite(&len, 4, 1, stdout);   // length prefix
-    fwrite(json, len, 1, stdout); // JSON body
-    fflush(stdout);
-}
+void MTDeviceStart(MTDeviceRef, int);
 
 static int chrome_out_fd = -1;
 
@@ -43,6 +35,7 @@ void send_json_to_chrome_fd(const char *json) {
     // write length (little-endian) then json bytes
     write(chrome_out_fd, &len, 4);
     write(chrome_out_fd, json, len);
+    fsync(chrome_out_fd); // optional, ensures delivery
 }
 
 int callback(int device, Finger *data, int nFingers, double timestamp, int frame) {
@@ -96,5 +89,6 @@ int main() {
   MTDeviceStart(dev, 0);
 
   sleep(-1);
+  
   return 0;
 }
