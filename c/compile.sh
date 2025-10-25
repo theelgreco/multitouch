@@ -1,0 +1,1 @@
+sudo /usr/bin/clang /Users/stelioskakoliris/Desktop/coding/c++/multitouch/c/main.c -F /System/Library/PrivateFrameworks -framework MultitouchSupport -o /Users/stelioskakoliris/Desktop/coding/c++/multitouch/c/main
