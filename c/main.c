@@ -39,7 +39,7 @@ void send_json_to_chrome_fd(const char *json) {
 }
 
 int callback(int device, Finger *data, int nFingers, double timestamp, int frame) {
-    char json[1024];
+    char json[4096];
     int offset = 0;
 
     offset += snprintf(
