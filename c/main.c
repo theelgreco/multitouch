@@ -52,12 +52,46 @@ int callback(int device, Finger *data, int nFingers, double timestamp, int frame
     for (int i = 0; i < nFingers; i++) {
         Finger *f = &data[i];
 
-        offset += snprintf(
-          json + offset, sizeof(json) - offset, 
-          "{\"id\":%d,\"x\":%.3f,\"y\":%.3f}", 
-          f->identifier,
-          f->normalized.pos.x,
-          f->normalized.pos.y
+        // offset += snprintf(
+        //   json + offset, sizeof(json) - offset, 
+        //   "{\"id\":%d,\"x\":%.3f,\"y\":%.3f}", 
+        //   f->identifier,
+        //   f->normalized.pos.x,
+        //   f->normalized.pos.y
+        // );
+
+                // convert radians to degrees
+        float angle_deg = f->angle * 90 / atan2(1, 0);
+
+        offset += snprintf(json + offset, sizeof(json) - offset,
+            "{"
+            "\"frame\":%d,"
+            "\"angle\":%.2f,"
+            "\"majorAxis\":%.3f,"
+            "\"minorAxis\":%.3f,"
+            "\"position\":{\"x\":%.3f,\"y\":%.3f},"
+            "\"velocity\":{\"x\":%.3f,\"y\":%.3f},"
+            "\"identifier\":%d,"
+            "\"state\":%d,"
+            "\"foo3\":%d,"
+            "\"foo4\":%d,"
+            "\"size\":%.3f,"
+            "\"unk2\":%.3f"
+            "}",
+            f->frame,
+            angle_deg,
+            f->majorAxis,
+            f->minorAxis,
+            f->normalized.pos.x,
+            f->normalized.pos.y,
+            f->normalized.vel.x,
+            f->normalized.vel.y,
+            f->identifier,
+            f->state,
+            f->foo3,
+            f->foo4,
+            f->size,
+            f->unk2
         );
 
         if (i < nFingers - 1) offset += snprintf(json + offset, sizeof(json) - offset, ",");
