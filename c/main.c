@@ -39,9 +39,6 @@ void send_json_to_chrome_fd(const char *json) {
 }
 
 int callback(int device, Finger *data, int nFingers, double timestamp, int frame) {
-    // Guard
-    if (nFingers <= 0 || data == NULL) return 0;
-
     char json[1024];
     int offset = 0;
 
