@@ -42,26 +42,36 @@ int callback(int device, Finger *data, int nFingers, double timestamp, int frame
     char json[1024];
     int offset = 0;
 
-    offset += snprintf(json + offset, sizeof(json),
-                       "{\"frame\":%d,\"timestamp\":%.6f,\"fingers\":[",
-                       frame, timestamp);
+    offset += snprintf(
+      json + offset, 
+      sizeof(json), "{\"frame\":%d,\"timestamp\":%.6f,\"fingers\":[", 
+      frame, 
+      timestamp
+    );
 
     for (int i = 0; i < nFingers; i++) {
         Finger *f = &data[i];
 
-        offset += snprintf(json + offset, sizeof(json) - offset,
-                           "{\"id\":%d,\"x\":%.3f,\"y\":%.3f}",
-                           f->identifier,
-                           f->normalized.pos.x,
-                           f->normalized.pos.y);
+        offset += snprintf(
+          json + offset, sizeof(json) - offset, 
+          "{\"id\":%d,\"x\":%.3f,\"y\":%.3f}", 
+          f->identifier,
+          f->normalized.pos.x,
+          f->normalized.pos.y
+        );
 
         if (i < nFingers - 1) offset += snprintf(json + offset, sizeof(json) - offset, ",");
         if (offset >= (int)sizeof(json) - 64) break; // prevent overflow
     }
 
-    offset += snprintf(json + offset, sizeof(json) - offset, "]}");
+    offset += snprintf(
+      json + offset, 
+      sizeof(json) - offset, 
+      "]}"
+    );
 
     send_json_to_chrome_fd(json);
+    
     return 0;
 }
 
