@@ -4,3 +4,5 @@ c/main
 c/compile.sh
 node_modules
 results.json
+build
+.DS_Store
