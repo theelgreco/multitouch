@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <h1>Two-Finger Knob</h1>
+            <p class="instructions">Use two fingers to rotate the knob like a dial</p>
+
+            <div class="knob-container">
+                <div class="knob-outer">
+                    <div class="knob" id="knob">
+                        <div class="knob-indicator"></div>
+                        <div class="knob-grip"></div>
+                        <div class="knob-grip"></div>
+                        <div class="knob-grip"></div>
+                        <div class="knob-grip"></div>
+                        <div class="knob-grip"></div>
+                        <div class="knob-grip"></div>
+                    </div>
+                </div>
+                <div class="knob-ticks">
+                    <span class="tick" data-angle="-135"></span>
+                    <span class="tick" data-angle="-90"></span>
+                    <span class="tick" data-angle="-45"></span>
+                    <span class="tick" data-angle="0"></span>
+                    <span class="tick" data-angle="45"></span>
+                    <span class="tick" data-angle="90"></span>
+                    <span class="tick" data-angle="135"></span>
+                    <span class="tick" data-angle="180"></span>
+                </div>
+            </div>
+
+            <div class="value-display">
+                <span class="value-label">Value</span>
+                <span class="value-number" id="valueDisplay">0°</span>
+            </div>
+
+            <div class="finger-display">
+                <div class="finger-info" id="finger1">Finger 1: --</div>
+                <div class="finger-info" id="finger2">Finger 2: --</div>
+                <div class="angle-info" id="angleInfo">Rotation Angle: --</div>
+            </div>
+        </div>
+        <script src="script.ts"></script>
+    </body>
+</html>
