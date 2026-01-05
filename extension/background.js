@@ -5,7 +5,7 @@ chrome.action.onClicked.addListener(() => {
     started = !started;
 
     if (started) {
-        port = chrome.runtime.connectNative("com.stelios.trackpad");
+        port = chrome.runtime.connectNative("com.stelan.multitouch");
         port.onMessage.addListener((msg) => {
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs[0]) {

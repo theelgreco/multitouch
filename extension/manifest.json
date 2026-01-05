@@ -1,6 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "Trackpad Stream Test",
+    "name": "Multitouch",
+    "description": "Bringing trackpad gestures to the web",
     "version": "1.0",
     "permissions": ["nativeMessaging", "tabs", "scripting"],
     "host_permissions": ["https://*/*", "http://*/*"],
@@ -15,5 +16,11 @@
             "matches": ["<all_urls>"],
             "js": ["content.js"]
         }
-    ]
+    ],
+    "icons": {
+        "16": "icons/16x16.png",
+        "32": "icons/32x32.png",
+        "48": "icons/48x48.png",
+        "128": "icons/128x128.png"
+    }
 }
