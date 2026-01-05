@@ -1,0 +1,114 @@
+.knob-example {
+    text-align: center;
+}
+
+.knob-example h2 {
+    font-size: 1.75rem;
+    margin-bottom: 8px;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.knob-container {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    margin: 0 auto 20px;
+}
+
+.knob-outer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.05);
+    padding: 15px;
+}
+
+.knob {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4), inset 0 -2px 5px rgba(0, 0, 0, 0.3), inset 0 2px 5px rgba(255, 255, 255, 0.05);
+    position: relative;
+    transition: transform 0.05s ease-out;
+}
+
+.knob-indicator {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 20px;
+    background: var(--gradient-primary-180);
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+.knob-grip {
+    position: absolute;
+    width: 4px;
+    height: 12px;
+    background: #333;
+    border-radius: 2px;
+    left: 50%;
+    top: 50%;
+}
+
+.knob-ticks {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.tick {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 12px;
+    background: #333;
+    border-radius: 2px;
+    transform-origin: center center;
+    transition: background 0.15s ease, box-shadow 0.15s ease, height 0.15s ease;
+}
+
+.tick.active {
+    background: var(--gradient-primary-180);
+    box-shadow: 0 0 12px rgba(102, 126, 234, 0.8), 0 0 24px rgba(118, 75, 162, 0.5);
+    height: 16px;
+    width: 5px;
+}
+
+.value-display {
+    margin-bottom: 24px;
+}
+
+.value-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}
+
+.value-number {
+    font-size: 3rem;
+    font-weight: 700;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
