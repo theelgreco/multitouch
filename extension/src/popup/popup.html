@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="stylesheet" href="popup.css" />
+    </head>
+    <body>
+        <div class="popup-container">
+            <div class="header">
+                <h1 class="title">Multitouch</h1>
+                <p class="subtitle">Trackpad gestures for the web</p>
+            </div>
+            
+            <div class="control-section">
+                <button id="toggle-btn" class="toggle-btn stopped">
+                    <svg id="play-icon" class="icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <svg id="pause-icon" class="icon hidden" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                </button>
+                <p id="status-text" class="status-text">Stopped</p>
+            </div>
+        </div>
+        <script src="popup.js"></script>
+    </body>
+</html>
