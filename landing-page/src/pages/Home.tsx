@@ -51,8 +51,6 @@ export function Home() {
 
     useTrackpad(handleTrackpad);
 
-    console.log("Hi");
-
     return (
         <div className="home">
             {/* Hero Section */}
