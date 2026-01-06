@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
 import "./Home.css";
+import { useTrackpad } from "../hooks/useTrackpad";
+import type { Finger } from "../types/trackpad";
+import { useCallback, useRef, useState } from "react";
 
 const features = [
     {
@@ -35,6 +38,19 @@ const features = [
 ];
 
 export function Home() {
+    const logo = useRef<HTMLImageElement>(null);
+    const [fingerLocations, setFingerLocations] = useState<(Finger["position"] & { id: Finger["identifier"] })[]>([]);
+
+    const handleTrackpad = useCallback((fingers: Finger[]) => {
+        setFingerLocations(
+            fingers.map((finger) => {
+                return { x: finger.position.x, y: finger.position.y, id: finger.identifier };
+            })
+        );
+    }, []);
+
+    useTrackpad(handleTrackpad);
+
     return (
         <div className="home">
             {/* Hero Section */}
@@ -59,15 +75,14 @@ export function Home() {
                     </div>
                     <p className="hero-note">Currently available for macOS only (experimental)</p>
                 </div>
-                <div className="hero-visual">
-                    <img src="/multitouch.svg" width={512} style={{ mixBlendMode: "lighten" }} />
-                    {/* <div className="trackpad-illustration">
-                        <div className="trackpad-surface">
-                            <div className="finger finger-1"></div>
-                            <div className="finger finger-2"></div>
-                            <div className="finger finger-3"></div>
-                        </div>
-                    </div> */}
+                <div className="hero-visual" ref={logo}>
+                    {fingerLocations.map((finger) => (
+                        <div
+                            className="hero-finger"
+                            style={{ "--x": `${finger.x * 100}%`, "--y": `${finger.y * 100}%` } as React.CSSProperties}
+                        ></div>
+                    ))}
+                    <img className="hero-logo" src="/multitouch.svg" width={512} style={{ mixBlendMode: "lighten" }} />
                 </div>
             </section>
 

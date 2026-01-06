@@ -1,3 +1,36 @@
+@property --h {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
+
+@property --s {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
+
+@property --l {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
+
+@keyframes hsl-rotate {
+    33% {
+        --s: 85;
+        --l: 75;
+    }
+    66% {
+        --s: 70;
+        --l: 30;
+    }
+    99% {
+        --s: 70;
+        --l: 60;
+    }
+}
+
 .home {
     flex: 1;
 }
@@ -65,64 +98,33 @@
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.trackpad-illustration {
-    width: 300px;
-    height: 200px;
-    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.trackpad-surface {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(180deg, #1a1a1a, #111);
-    border-radius: 12px;
     position: relative;
     overflow: hidden;
 }
 
-.finger {
+.hero-finger {
+    --x: 0%;
+    --y: 0%;
+    --size: 30px;
+
+    --h: 270;
+    --s: 50;
+    --l: 40;
+
+    background-color: hsl(var(--h) var(--s) var(--l));
+    filter: blur(10px);
+
     position: absolute;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--gradient-primary);
-    opacity: 0.7;
-    animation: pulse 2s ease-in-out infinite;
-}
+    bottom: var(--y);
+    left: var(--x);
+    width: var(--size);
+    height: var(--size);
 
-.finger-1 {
-    top: 30%;
-    left: 25%;
-    animation-delay: 0s;
-}
-
-.finger-2 {
-    top: 40%;
-    left: 50%;
-    animation-delay: 0.3s;
-}
-
-.finger-3 {
-    top: 35%;
-    left: 70%;
-    animation-delay: 0.6s;
-}
-
-@keyframes pulse {
-    0%,
-    100% {
-        transform: scale(1);
-        opacity: 0.7;
-    }
-    50% {
-        transform: scale(1.1);
-        opacity: 1;
-    }
+    animation-name: hsl-rotate;
+    animation-duration: 3s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
 }
 
 /* Features Section */
@@ -217,10 +219,5 @@
 
     .hero-visual {
         order: -1;
-    }
-
-    .trackpad-illustration {
-        width: 250px;
-        height: 160px;
     }
 }
