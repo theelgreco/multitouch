@@ -26,7 +26,7 @@ export function Navigation() {
                     </Link>
                 </div>
 
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="nav-github">
+                <a href="https://github.com/theelgreco/multitouch" target="_blank" rel="noopener noreferrer" className="nav-github">
                     <GitHubIcon />
                 </a>
             </div>
