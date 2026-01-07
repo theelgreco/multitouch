@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Multitouch",
     "description": "Bringing trackpad gestures to the web",
-    "version": "1.0",
+    "version": "1.0.0",
     "permissions": ["nativeMessaging", "tabs", "scripting"],
     "host_permissions": ["https://*/*", "http://*/*"],
     "background": {
