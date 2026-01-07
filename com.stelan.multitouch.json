@@ -1,0 +1,7 @@
+{
+    "name": "com.stelan.multitouch",
+    "description": "Multitouch data bridge",
+    "path": "/usr/local/bin/multitouch",
+    "type": "stdio",
+    "allowed_origins": ["chrome-extension://ccfdfclenbgnkcfoakffeghbcclgajji/"]
+}

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# COMPILES THE C PROGRAM AND THEN BUILDS THE MACOS PACKAGE
+# RUN THIS SCRIPT AFTER MAKING CHANGES TO main.c
+
+./compile.sh
+./package.sh

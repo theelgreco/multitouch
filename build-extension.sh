@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# BUMPS THE EXTENSION VERSION IN THE MANIFEST.JSON AND THEN ZIPS THE EXTENSION SO IT CAN BE UPLOADED TO THE CHROM STORE
+
 MANIFEST="extension/src/manifest.json"
 
 # Read current version
