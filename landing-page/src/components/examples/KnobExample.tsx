@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef } from "react";
-import { useTrackpad } from "../../hooks/useTrackpad";
+import { useCallback, useRef } from "react";
+import { useTrackpadListener, type TrackpadCallback } from "../../hooks/useTrackpad";
 import type { Finger } from "../../types/trackpad";
 import "./KnobExample.css";
+import { useEventListener } from "../../hooks/useEventListener";
 
 const TICK_ANGLES = [-135, -90, -45, 0, 45, 90, 135, 180];
 
@@ -23,73 +24,112 @@ const normalizeAngle = (angle: number): number => {
     return normalized;
 };
 
-const getActiveTicks = (rot: number): Set<number> => {
-    const indicatorAngle = normalizeAngle(rot);
-    const active = new Set<number>();
+// Pre-compute tick angle data for faster lookup
+const TICK_DATA = TICK_ANGLES.map((angle) => ({
+    angle,
+    normalized: normalizeAngle(angle),
+}));
 
-    TICK_ANGLES.forEach((tickAngle) => {
-        const normalizedTickAngle = normalizeAngle(tickAngle);
-        let angleDiff = Math.abs(indicatorAngle - normalizedTickAngle);
+const getActiveTickIndex = (rot: number): number => {
+    const indicatorAngle = normalizeAngle(rot);
+    for (let i = 0; i < TICK_DATA.length; i++) {
+        let angleDiff = Math.abs(indicatorAngle - TICK_DATA[i].normalized);
         if (angleDiff > 180) angleDiff = 360 - angleDiff;
         if (angleDiff <= 22.5) {
-            active.add(tickAngle);
+            return i;
         }
-    });
-
-    return active;
+    }
+    return -1;
 };
 
 export function KnobExample() {
-    const [rotation, setRotation] = useState(0);
-    const [fingerInfo, setFingerInfo] = useState({ f1: "--", f2: "--", angle: "--" });
-    const [activeTicks, setActiveTicks] = useState<Set<number>>(new Set([0]));
-
+    const rotationRef = useRef(0);
     const initialAngle = useRef<number | null>(null);
     const initialRotation = useRef(0);
+    const lastActiveTickIndex = useRef(4);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const knobRef = useRef<HTMLDivElement>(null);
+    const finger1Ref = useRef<HTMLDivElement>(null);
+    const finger2Ref = useRef<HTMLDivElement>(null);
+    const angleRef = useRef<HTMLDivElement>(null);
+    const valueRef = useRef<HTMLSpanElement>(null);
+    const tickRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
-    const handleTrackpad = useCallback(
-        (fingers: Finger[]) => {
-            const f1 = fingers[0];
-            const f2 = fingers[1];
+    const handleTrackpad = useCallback<TrackpadCallback>((e) => {
+        const fingers = e.detail.fingers;
+        const f1 = fingers[0];
+        const f2 = fingers[1];
 
-            setFingerInfo({
-                f1: f1 ? `x=${f1.position.x.toFixed(3)}, y=${f1.position.y.toFixed(3)}` : "--",
-                f2: f2 ? `x=${f2.position.x.toFixed(3)}, y=${f2.position.y.toFixed(3)}` : "--",
-                angle: fingers.length === 2 ? `${getAngleBetweenFingers(f1, f2).toFixed(1)}°` : "--",
-            });
+        // Update debug info directly via refs (no state update)
+        if (finger1Ref.current) {
+            finger1Ref.current.textContent = `Finger 1: ${f1 ? `x=${f1.position.x.toFixed(3)}, y=${f1.position.y.toFixed(3)}` : "--"}`;
+        }
+        if (finger2Ref.current) {
+            finger2Ref.current.textContent = `Finger 2: ${f2 ? `x=${f2.position.x.toFixed(3)}, y=${f2.position.y.toFixed(3)}` : "--"}`;
+        }
+        if (angleRef.current) {
+            angleRef.current.textContent = `Rotation Angle: ${
+                fingers.length === 2 ? `${getAngleBetweenFingers(f1, f2).toFixed(1)}°` : "--"
+            }`;
+        }
 
-            if (fingers.length === 2) {
-                const currentAngle = getAngleBetweenFingers(f1, f2);
+        if (fingers.length === 2) {
+            const currentAngle = getAngleBetweenFingers(f1, f2);
 
-                if (initialAngle.current === null) {
-                    initialAngle.current = currentAngle;
-                    initialRotation.current = rotation;
-                }
-
-                const angleDelta = normalizeAngleDelta(currentAngle - initialAngle.current);
-                const sensitivity = 2.5;
-                const newRotation = initialRotation.current - angleDelta * sensitivity;
-
-                setRotation(newRotation);
-                setActiveTicks(getActiveTicks(newRotation));
-            } else {
-                initialAngle.current = null;
-                initialRotation.current = rotation;
+            if (initialAngle.current === null) {
+                initialAngle.current = currentAngle;
+                initialRotation.current = rotationRef.current;
             }
-        },
-        [rotation]
-    );
 
-    useTrackpad(handleTrackpad);
+            const angleDelta = normalizeAngleDelta(currentAngle - initialAngle.current);
+            const sensitivity = 2.5;
+            const newRotation = initialRotation.current - angleDelta * sensitivity;
+            rotationRef.current = newRotation;
 
-    const displayValue = (() => {
-        let val = rotation % 360;
-        if (val < 0) val += 360;
-        return Math.round(val);
-    })();
+            // Update knob rotation directly
+            if (knobRef.current) {
+                knobRef.current.style.transform = `rotate(${newRotation}deg)`;
+            }
+
+            // Calculate display value
+            let val = newRotation % 360;
+            if (val < 0) val += 360;
+            const roundedVal = Math.round(val);
+
+            // Update value display directly
+            if (valueRef.current) {
+                valueRef.current.textContent = `${roundedVal}°`;
+            }
+
+            // Update active tick directly via DOM
+            const newActiveIndex = getActiveTickIndex(newRotation);
+            if (newActiveIndex !== lastActiveTickIndex.current) {
+                // Remove active class from previous tick
+                if (lastActiveTickIndex.current >= 0 && tickRefs.current[lastActiveTickIndex.current]) {
+                    tickRefs.current[lastActiveTickIndex.current]!.classList.remove("active");
+                }
+                // Add active class to new tick
+                if (newActiveIndex >= 0 && tickRefs.current[newActiveIndex]) {
+                    tickRefs.current[newActiveIndex]!.classList.add("active");
+                }
+                lastActiveTickIndex.current = newActiveIndex;
+            }
+        } else {
+            initialAngle.current = null;
+            initialRotation.current = rotationRef.current;
+        }
+    }, []);
+
+    useTrackpadListener(knobRef, handleTrackpad);
+    useEventListener("mouseleave", knobRef, () => {
+        requestAnimationFrame(() => {
+            if (finger1Ref.current) finger1Ref.current.textContent = "Finger 1: --";
+            if (finger2Ref.current) finger2Ref.current.textContent = "Finger 2: --";
+        });
+    });
 
     return (
-        <div className="knob-example">
+        <div ref={containerRef} className="knob-example">
             <h2>Two-Finger Knob</h2>
             <p className="example-instructions">
                 Use two fingers to rotate the knob like a dial. Rotate your fingers clockwise or counter-clockwise.
@@ -97,7 +137,7 @@ export function KnobExample() {
 
             <div className="knob-container">
                 <div className="knob-outer">
-                    <div className="knob" style={{ transform: `rotate(${rotation}deg)` }}>
+                    <div ref={knobRef} className="knob" style={{ willChange: "transform" }}>
                         <div className="knob-indicator" />
                         {[0, 60, 120, 180, 240, 300].map((angle) => (
                             <div
@@ -111,10 +151,13 @@ export function KnobExample() {
                     </div>
                 </div>
                 <div className="knob-ticks">
-                    {TICK_ANGLES.map((angle) => (
+                    {TICK_ANGLES.map((angle, index) => (
                         <span
                             key={angle}
-                            className={`tick ${activeTicks.has(angle) ? "active" : ""}`}
+                            ref={(el) => {
+                                tickRefs.current[index] = el;
+                            }}
+                            className={`tick ${index === 3 ? "active" : ""}`}
                             style={{
                                 transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-100px)`,
                             }}
@@ -125,14 +168,20 @@ export function KnobExample() {
 
             <div className="value-display">
                 <span className="value-label">Value</span>
-                <span className="value-number">{displayValue}°</span>
+                <span ref={valueRef} className="value-number">
+                    0°
+                </span>
             </div>
 
             <div className="debug-panel">
-                <div className="debug-info">Finger 1: {fingerInfo.f1}</div>
-                <div className="debug-info">Finger 2: {fingerInfo.f2}</div>
-                <div className="debug-info" style={{ color: "var(--color-secondary)" }}>
-                    Rotation Angle: {fingerInfo.angle}
+                <div ref={finger1Ref} className="debug-info">
+                    Finger 1: --
+                </div>
+                <div ref={finger2Ref} className="debug-info">
+                    Finger 2: --
+                </div>
+                <div ref={angleRef} className="debug-info" style={{ color: "var(--color-secondary)" }}>
+                    Rotation Angle: --
                 </div>
             </div>
         </div>
