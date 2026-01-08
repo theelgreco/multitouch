@@ -25,11 +25,14 @@ export interface TrackpadEventDetail {
     fingers: Finger[];
 }
 
-export interface TrackpadEvent extends CustomEvent<TrackpadEventDetail> {}
+export type TrackpadEvent = CustomEvent<TrackpadEventDetail>;
 
 // Declare the trackpad event on the window
 declare global {
     interface WindowEventMap {
         trackpad: TrackpadEvent;
+    }
+    interface HTMLElementEventMap {
+        "trackpad:element": TrackpadEvent;
     }
 }

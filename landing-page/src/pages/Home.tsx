@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import "./Home.css";
-import { useTrackpad } from "../hooks/useTrackpad";
-import type { Finger } from "../types/trackpad";
+import { useTrackpadListener } from "../hooks/useTrackpad";
+import type { Finger, TrackpadEvent } from "../types/trackpad";
 import { useCallback, useRef, useState } from "react";
 
 const features = [
@@ -41,15 +41,15 @@ export function Home() {
     const logo = useRef<HTMLImageElement>(null);
     const [fingerLocations, setFingerLocations] = useState<(Finger["position"] & { id: Finger["identifier"] })[]>([]);
 
-    const handleTrackpad = useCallback((fingers: Finger[]) => {
+    const handleTrackpad = useCallback((e: TrackpadEvent) => {
         setFingerLocations(
-            fingers.map((finger) => {
+            (e.detail.fingers || []).map((finger) => {
                 return { x: finger.position.x, y: finger.position.y, id: finger.identifier };
             })
         );
     }, []);
 
-    useTrackpad(handleTrackpad);
+    useTrackpadListener(logo, handleTrackpad);
 
     return (
         <div className="home">
@@ -78,6 +78,7 @@ export function Home() {
                 <div className="hero-visual" ref={logo}>
                     {fingerLocations.map((finger) => (
                         <div
+                            key={finger.id}
                             className="hero-finger"
                             style={{ "--x": `${finger.x * 100}%`, "--y": `${finger.y * 100}%` } as React.CSSProperties}
                         ></div>

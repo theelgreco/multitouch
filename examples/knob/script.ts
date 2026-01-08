@@ -113,23 +113,28 @@ function updateFingerDisplay(fingers: Finger[]): void {
     }
 }
 
-window.addEventListener(
-    "wheel",
-    (e) => {
-        e.preventDefault();
-    },
-    { passive: false }
-);
+// Event listeners
 
-window.addEventListener(
-    "gesturestart",
-    (e) => {
-        e.preventDefault();
-    },
-    { passive: false }
-);
+const currentPosition = { x: 0, y: 0 };
+
+window.addEventListener("mousemove", (e) => {
+    currentPosition.x = e.clientX;
+    currentPosition.y = e.clientY;
+});
 
 window.addEventListener("trackpad", (e) => {
+    const ev = e as TrackpadEvent;
+    document.elementFromPoint(currentPosition.x, currentPosition.y)?.dispatchEvent(
+        new CustomEvent("trackpad:element", {
+            detail: ev.detail,
+            bubbles: true,
+            composed: true,
+            cancelable: true,
+        })
+    );
+});
+
+knob.addEventListener("trackpad:element", (e) => {
     const ev = e as TrackpadEvent;
     const { fingers } = ev.detail;
 
@@ -163,6 +168,22 @@ window.addEventListener("trackpad", (e) => {
         angleInfo.textContent = "Rotation Angle: --";
     }
 });
+
+knob.addEventListener(
+    "wheel",
+    (e) => {
+        e.preventDefault();
+    },
+    { passive: false }
+);
+
+knob.addEventListener(
+    "gesturestart",
+    (e) => {
+        e.preventDefault();
+    },
+    { passive: false }
+);
 
 // Initialize knob
 updateKnob(currentRotation);

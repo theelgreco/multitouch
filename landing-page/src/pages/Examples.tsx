@@ -3,6 +3,7 @@ import { SliderExample } from "../components/examples/SliderExample";
 import { KnobExample } from "../components/examples/KnobExample";
 import { MenuExample } from "../components/examples/MenuExample";
 import "./Examples.css";
+import PressureExample from "../components/examples/PressureExample";
 
 const examples = [
     {
@@ -22,6 +23,12 @@ const examples = [
         title: "Gesture Menu",
         description: "Swipe to reveal a hidden menu",
         component: MenuExample,
+    },
+    {
+        id: "pressure",
+        title: "Pressure",
+        description: "A pressure thing",
+        component: PressureExample,
     },
 ];
 

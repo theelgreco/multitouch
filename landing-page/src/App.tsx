@@ -4,8 +4,11 @@ import { Home } from "./pages/Home";
 import { Install } from "./pages/Install";
 import { Examples } from "./pages/Examples";
 import "./App.css";
+import { useTrackpad } from "./hooks/useTrackpad";
 
 function App() {
+    useTrackpad();
+
     return (
         <BrowserRouter>
             <Navigation />
