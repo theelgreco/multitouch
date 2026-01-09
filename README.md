@@ -32,7 +32,7 @@ To install all the components of multitouch locally, follow these steps:
 
 1.  Compile the C program (`c/main.c`). I've provided a handy `compile.sh` script that runs the compilation with the necessary frameworks. If it compiles successfully, the binary output should now be available at `c/build/multitouch`
 2.  Place the compiled C program in your desired location. I recommend `/usr/local/bin/`. Note: if you choose to place it somewhere else, you will have to update `field` in `com.stelan.multitouch.json` to point to this new location.
-3.  Load the extension into Chrome. In Chrome, go to the extensions page by either entering `chrome://extensions` in to the URL address bar, or by going to `Settings` > `Extensions` > `Manage Extensions`, then click on `Load unpacked` and select the `extension/` directory in this repo. Copy the generated extension ID and replace the `allowed_origins` entry in `com.stelan.multitouch.json` with `"chrome-extension://{EXTENSION_ID}/"`.
+3.  Load the extension into Chrome. In Chrome, go to the extensions page by either entering `chrome://extensions` in to the URL address bar, or by going to `Settings` > `Extensions` > `Manage Extensions`, make sure `Developer mode` is enabled and then click on `Load unpacked` and select the `extension/src/` directory in this repo. Copy the generated extension ID and replace the `allowed_origins` entry in `com.stelan.multitouch.json` with `"chrome-extension://{EXTENSION_ID}/"`.
 4.  Place `com.stelan.multitouch.json` into `/Library/Google/Chrome/NativeMessagingHosts/`.
 
 ## Testing the integration
@@ -45,6 +45,7 @@ window.addEventListener("trackpad", (e) => console.log("trackpad", e.detail));
 ```
 
 -   Place fingers on the macOS trackpad — you should see `trackpad` event objects logged as the native helper sends frames through the extension.
+-   Alternatively, go to [https://multitouch.stelan.io/examples](https://multitouch.stelan.io/examples) and try out some of the examples.
 
 ## Troubleshooting
 
