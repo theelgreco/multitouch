@@ -6,3 +6,4 @@ results.json
 build
 .DS_Store
 pkg
+/examples/
