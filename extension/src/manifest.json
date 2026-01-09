@@ -3,7 +3,7 @@
     "name": "Multitouch",
     "description": "Bringing trackpad gestures to the web",
     "version": "1.0.0",
-    "permissions": ["nativeMessaging", "tabs", "activeTab"],
+    "permissions": ["nativeMessaging", "tabs"],
     "background": {
         "service_worker": "background.js"
     },
