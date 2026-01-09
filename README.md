@@ -16,7 +16,6 @@ This repository provides a Chrome extension and a native macOS helper that toget
 -   `c/` — Native helper source (C) and build output. Captures multitouch/trackpad frames and communicates with Chrome via Native Messaging.
 -   `extension/` — Chrome extension source (background & content scripts, manifest, icons). Forwards native messages into pages as `trackpad` CustomEvents.
 -   `landing-page/` — React + Vite demo app used to exercise the extension and show examples. Hosted at [https://multitouch.stelan.io](https://multitouch.stelan.io).
--   `pkg/` — Packaging output and install-root layout for generating installer packages.
 -   Root scripts:
     -   `compile.sh`, `compile-and-package.sh`, `package.sh`, `build-extension.sh` — build and packaging helpers.
     -   `uninstall.sh` — uninstall helper/manifest.
