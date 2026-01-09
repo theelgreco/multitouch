@@ -1,6 +1,6 @@
 <div align="center" style="display:flex;flex-direction:column;align-items:center;border:0;">
   <img src="landing-page/public/multitouch.svg" alt="Codepen Local Logo" width="120" />
-  <a href="https://multitouch.stelan.io" style="border:0;font-size:2.5rem;">Multitouch</a>
+  <h1 style="border:0"><a href="https://multitouch.stelan.io" style="border:0;">Multitouch</a></h1>
   <h3 style="border:0;margin-top:0;">Bringing trackpad gestures to the web</h3>
   <p align="center">
     Unlock the full potential of your MacBook's trackpad. Access raw multi-finger data, create gesture-controlled interfaces, and build experiences that weren't possible before.
@@ -24,7 +24,7 @@ This repository provides a Chrome extension and a native macOS helper that toget
 
 The native helper (`c/main.c`) writes framed JSON to stdout for Chrome to receive via Native Messaging. The extension background page connects to that native host and forwards frames into the active tab. A content script dispatches a page-level CustomEvent named `trackpad` so website JavaScript can consume raw frame objects.
 
-## Manual Installation
+## Installation
 
 **Note: This is a guide for building and running multitouch locally. If you're just interested in downloading and using the live version, follow the instructions at [https://multitouch.stelan.io/install](https://multitouch.stelan.io/install).**
 
