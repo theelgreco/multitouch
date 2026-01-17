@@ -63,6 +63,8 @@ export function Install() {
 
                             <a
                                 href="https://chromewebstore.google.com/detail/multitouch/hlgeacmfgefgckhjenodpopoggkgnpff"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="btn btn-chrome download-btn"
                             >
                                 <ChromeLogo />
