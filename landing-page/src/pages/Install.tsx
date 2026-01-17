@@ -64,10 +64,6 @@ export function Install() {
                             <a
                                 href="https://chromewebstore.google.com/detail/multitouch/hlgeacmfgefgckhjenodpopoggkgnpff"
                                 className="btn btn-chrome download-btn"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    alert("Chrome extension link coming soon!");
-                                }}
                             >
                                 <ChromeLogo />
                                 Add to Chrome
