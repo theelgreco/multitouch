@@ -62,7 +62,7 @@ export function Install() {
                             </div>
 
                             <a
-                                href="#"
+                                href="https://chromewebstore.google.com/detail/multitouch/hlgeacmfgefgckhjenodpopoggkgnpff"
                                 className="btn btn-chrome download-btn"
                                 onClick={(e) => {
                                     e.preventDefault();
