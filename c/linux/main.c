@@ -2,61 +2,58 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
+#include <errno.h>
 #include <libevdev-1.0/libevdev/libevdev.h>
 
-void clean_exit(struct libevdev *dev, int fd) {
-    close(fd);
-    libevdev_free(dev);
-    exit(1);
+// Global state for signal handler access
+static volatile sig_atomic_t running = 1;
+static struct libevdev *g_dev = NULL;
+static int g_fd = -1;
+
+void cleanup(void) {
+    if (g_dev) {
+        libevdev_free(g_dev);
+        g_dev = NULL;
+    }
+    if (g_fd >= 0) {
+        close(g_fd);
+        g_fd = -1;
+    }
 }
 
-int main() {    
-    struct libevdev *dev = NULL;
+void signal_handler(int sig) {
+    (void)sig;  // unused
+    running = 0;
+}
 
-    int fd = open("/dev/input/event9", O_RDONLY | O_NONBLOCK);
-    if(fd == -1) {
-        printf("open failed: No such file or directory\n");
-        exit(1);
-    }
+void setup_signal_handlers(void) {
+    struct sigaction sa;
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+}
 
-    int rc = libevdev_new_from_fd(fd, &dev);
-    if(rc < 0) {
-        printf("Couldn't create libevdev context\n");
-        clean_exit(dev, fd);
-    }
-
-    if(!libevdev_has_event_type(dev, EV_ABS) || !libevdev_has_event_code(dev, EV_ABS, ABS_MT_SLOT)) {
-        printf("Error: Device is not a touchpad\n");
-        clean_exit(dev, fd);
-    }
-
-    int available_slots = libevdev_get_num_slots(dev);
-    if(available_slots < 0) {
-        printf("Type A MT device (no slots)\n");
-        clean_exit(dev, fd);
-    }
-
-    printf("Available slots: %d\n", available_slots);
-    printf("Input device name: \"%s\"\n", libevdev_get_name(dev));
-
-    // Consume pending events so slot values are updated
-    struct input_event ev;
-    while(libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev) == 0) {
-        // nothing needed inside loop
-    }
-
-    printf("[\n");
-    for(int i = 0; i < available_slots; i++) {
-        int x = -1;
-        int y = -1;
-        int pressure = -1;
-        int wmaj = -1;
-        int wmin = -1;
-        int tmaj = -1;
-        int tmin = -1;
-        int distance = -1;
-        int angle = -1;
-
+void output_frame(struct libevdev *dev, int num_slots) {
+    int first = 1;
+    printf("[");
+    
+    for (int i = 0; i < num_slots; i++) {
+        int tracking_id = -1;
+        libevdev_fetch_slot_value(dev, i, ABS_MT_TRACKING_ID, &tracking_id);
+        
+        // Only output active touches (tracking_id >= 0 means finger is touching)
+        if (tracking_id < 0) {
+            continue;
+        }
+        
+        int x = 0, y = 0, pressure = 0;
+        int wmaj = 0, wmin = 0, tmaj = 0, tmin = 0;
+        int distance = 0, angle = 0;
+        
         libevdev_fetch_slot_value(dev, i, ABS_MT_POSITION_X, &x);
         libevdev_fetch_slot_value(dev, i, ABS_MT_POSITION_Y, &y);
         libevdev_fetch_slot_value(dev, i, ABS_MT_PRESSURE, &pressure);
@@ -66,14 +63,84 @@ int main() {
         libevdev_fetch_slot_value(dev, i, ABS_MT_TOUCH_MINOR, &tmin);
         libevdev_fetch_slot_value(dev, i, ABS_MT_DISTANCE, &distance);
         libevdev_fetch_slot_value(dev, i, ABS_MT_ORIENTATION, &angle);
-
-        printf("    { x: %d, y: %d, pressure: %d, wmaj: %d, wmin: %d, tmaj: %d, tmin: %d, distance: %d, angle: %d }%s\n",
-               x, y, pressure, wmaj, wmin, tmaj, tmin, distance, angle,
-               (i == available_slots - 1) ? "" : ",");
+        
+        if (!first) {
+            printf(",");
+        }
+        first = 0;
+        
+        printf("{\"x\":%d,\"y\":%d,\"pressure\":%d,\"wmaj\":%d,\"wmin\":%d,\"tmaj\":%d,\"tmin\":%d,\"distance\":%d,\"angle\":%d}",
+               x, y, pressure, wmaj, wmin, tmaj, tmin, distance, angle);
     }
+    
     printf("]\n");
+    fflush(stdout);
+}
 
-    libevdev_free(dev);
-    close(fd);
+int main() {
+    setup_signal_handlers();
+    
+    g_fd = open("/dev/input/event9", O_RDONLY | O_NONBLOCK);
+    if (g_fd < 0) {
+        fprintf(stderr, "open failed: No such file or directory\n");
+        return 1;
+    }
+
+    int rc = libevdev_new_from_fd(g_fd, &g_dev);
+    if (rc < 0) {
+        fprintf(stderr, "Couldn't create libevdev context\n");
+        cleanup();
+        return 1;
+    }
+
+    if (!libevdev_has_event_type(g_dev, EV_ABS) || 
+        !libevdev_has_event_code(g_dev, EV_ABS, ABS_MT_SLOT)) {
+        fprintf(stderr, "Error: Device is not a touchpad\n");
+        cleanup();
+        return 1;
+    }
+
+    int num_slots = libevdev_get_num_slots(g_dev);
+    if (num_slots < 0) {
+        fprintf(stderr, "Type A MT device (no slots)\n");
+        cleanup();
+        return 1;
+    }
+
+    fprintf(stderr, "Available slots: %d\n", num_slots);
+    fprintf(stderr, "Input device name: \"%s\"\n", libevdev_get_name(g_dev));
+
+    // Event loop
+    struct input_event ev;
+    while (running) {
+        rc = libevdev_next_event(g_dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_BLOCKING, &ev);
+        
+        if (rc == -EAGAIN) {
+            // No events available, continue
+            continue;
+        }
+        
+        if (rc == LIBEVDEV_READ_STATUS_SYNC) {
+            // Device needs sync, drain sync events
+            while (rc == LIBEVDEV_READ_STATUS_SYNC) {
+                rc = libevdev_next_event(g_dev, LIBEVDEV_READ_FLAG_SYNC, &ev);
+            }
+            continue;
+        }
+        
+        if (rc < 0 && rc != -EAGAIN) {
+            // Read error (device disconnected, etc.)
+            fprintf(stderr, "Error reading events: %d\n", rc);
+            break;
+        }
+        
+        // On SYN_REPORT, a complete frame is ready - output current state
+        if (ev.type == EV_SYN && ev.code == SYN_REPORT) {
+            output_frame(g_dev, num_slots);
+        }
+    }
+
+    fprintf(stderr, "Shutting down...\n");
+    cleanup();
     return 0;
 }
