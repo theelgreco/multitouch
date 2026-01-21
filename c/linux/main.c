@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <string.h>
+#include <strings.h>
+#include <dirent.h>
 #include <libevdev-1.0/libevdev/libevdev.h>
 
 // Global state for signal handler access
@@ -35,6 +38,140 @@ void setup_signal_handlers(void) {
     
     sigaction(SIGINT, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
+}
+
+// Check if a device has touchpad capabilities
+static int is_touchpad(struct libevdev *dev) {
+    // Must have BTN_TOUCH and BTN_TOOL_FINGER
+    if (!libevdev_has_event_code(dev, EV_KEY, BTN_TOUCH))
+        return 0;
+    if (!libevdev_has_event_code(dev, EV_KEY, BTN_TOOL_FINGER))
+        return 0;
+    
+    // Must have absolute position
+    if (!libevdev_has_event_code(dev, EV_ABS, ABS_X))
+        return 0;
+    if (!libevdev_has_event_code(dev, EV_ABS, ABS_Y))
+        return 0;
+    
+    // Exclude touchscreens (direct input devices)
+    if (libevdev_has_property(dev, INPUT_PROP_DIRECT))
+        return 0;
+    
+    return 1;
+}
+
+// Check if device name matches known touchpad patterns (case-insensitive)
+static int is_priority_touchpad_name(const char *name) {
+    if (!name) return 0;
+    
+    // Priority patterns for common touchpad manufacturers/types
+    const char *patterns[] = {
+        "touchpad",
+        "trackpad",
+        "synaptics",
+        "elan",
+        "alps",
+        "bcm5974",
+        NULL
+    };
+    
+    for (int i = 0; patterns[i] != NULL; i++) {
+        if (strcasestr(name, patterns[i]) != NULL) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Find and open a touchpad device
+// Returns 0 on success (sets g_fd and g_dev), -1 on failure
+static int find_touchpad(void) {
+    DIR *dir = opendir("/dev/input");
+    if (!dir) {
+        fprintf(stderr, "Error: Cannot open /dev/input: %s\n", strerror(errno));
+        return -1;
+    }
+    
+    struct dirent *entry;
+    int fallback_fd = -1;
+    struct libevdev *fallback_dev = NULL;
+    char fallback_path[256] = {0};
+    
+    while ((entry = readdir(dir)) != NULL) {
+        // Only look at event* files
+        if (strncmp(entry->d_name, "event", 5) != 0)
+            continue;
+        
+        char path[1024];
+        snprintf(path, sizeof(path), "/dev/input/%s", entry->d_name);
+        
+        int fd = open(path, O_RDONLY | O_NONBLOCK);
+        if (fd < 0) {
+            // Skip devices we can't open (permission errors, etc.)
+            continue;
+        }
+        
+        struct libevdev *dev = NULL;
+        int rc = libevdev_new_from_fd(fd, &dev);
+        if (rc < 0) {
+            close(fd);
+            continue;
+        }
+        
+        // Check if this is a valid touchpad
+        if (!is_touchpad(dev)) {
+            libevdev_free(dev);
+            close(fd);
+            continue;
+        }
+        
+        const char *name = libevdev_get_name(dev);
+        
+        // Check if this matches a priority name pattern
+        if (is_priority_touchpad_name(name)) {
+            // Found a priority touchpad - use it immediately
+            fprintf(stderr, "Found touchpad: %s (%s)\n", name, path);
+            
+            // Clean up fallback if we had one
+            if (fallback_dev) {
+                libevdev_free(fallback_dev);
+                close(fallback_fd);
+            }
+            
+            g_fd = fd;
+            g_dev = dev;
+            closedir(dir);
+            return 0;
+        }
+        
+        // Valid touchpad but not priority - save as fallback
+        if (fallback_fd < 0) {
+            fallback_fd = fd;
+            fallback_dev = dev;
+            strncpy(fallback_path, path, sizeof(fallback_path) - 1);
+        } else {
+            // Already have a fallback, skip this one
+            libevdev_free(dev);
+            close(fd);
+        }
+    }
+    
+    closedir(dir);
+    
+    // If no priority device found, use fallback
+    if (fallback_fd >= 0) {
+        const char *name = libevdev_get_name(fallback_dev);
+        fprintf(stderr, "Found touchpad: %s (%s)\n", name ? name : "Unknown", fallback_path);
+        g_fd = fallback_fd;
+        g_dev = fallback_dev;
+        return 0;
+    }
+    
+    fprintf(stderr, "Error: No touchpad device found\n");
+    fprintf(stderr, "Make sure you have permission to read /dev/input/event* devices\n");
+    fprintf(stderr, "(You may need to run as root or add your user to the 'input' group)\n");
+    return -1;
 }
 
 void output_frame(struct libevdev *dev, int num_slots) {
@@ -80,22 +217,14 @@ void output_frame(struct libevdev *dev, int num_slots) {
 int main() {
     setup_signal_handlers();
     
-    g_fd = open("/dev/input/event9", O_RDONLY | O_NONBLOCK);
-    if (g_fd < 0) {
-        fprintf(stderr, "open failed: No such file or directory\n");
-        return 1;
-    }
-
-    int rc = libevdev_new_from_fd(g_fd, &g_dev);
-    if (rc < 0) {
-        fprintf(stderr, "Couldn't create libevdev context\n");
-        cleanup();
+    // Find and open a touchpad device
+    if (find_touchpad() < 0) {
         return 1;
     }
 
     if (!libevdev_has_event_type(g_dev, EV_ABS) || 
         !libevdev_has_event_code(g_dev, EV_ABS, ABS_MT_SLOT)) {
-        fprintf(stderr, "Error: Device is not a touchpad\n");
+        fprintf(stderr, "Error: Device does not support multitouch slots\n");
         cleanup();
         return 1;
     }
@@ -107,13 +236,10 @@ int main() {
         return 1;
     }
 
-    fprintf(stderr, "Available slots: %d\n", num_slots);
-    fprintf(stderr, "Input device name: \"%s\"\n", libevdev_get_name(g_dev));
-
     // Event loop
     struct input_event ev;
     while (running) {
-        rc = libevdev_next_event(g_dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_BLOCKING, &ev);
+        int rc = libevdev_next_event(g_dev, LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_BLOCKING, &ev);
         
         if (rc == -EAGAIN) {
             // No events available, continue
@@ -130,7 +256,6 @@ int main() {
         
         if (rc < 0 && rc != -EAGAIN) {
             // Read error (device disconnected, etc.)
-            fprintf(stderr, "Error reading events: %d\n", rc);
             break;
         }
         
